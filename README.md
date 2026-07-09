@@ -10,30 +10,81 @@ The game is designed with a noir aesthetic and a focus on narrative-driven gamep
 - **AI Integration:** LLM-powered suspect interrogation and dynamic responses
 - **Frontend:** HTML/CSS/JS (Vanilla)
 
-## Setup & Running Locally
+## Detailed Setup & Installation Guide
 
-1. **Prerequisites:**
-   - Python 3.10+
-   - PostgreSQL
-   - An API key for the language model (configured via environment variables or `config.py`)
+Follow these steps to download the repository, configure the necessary services, and run the game on your local machine.
 
-2. **Installation:**
-   ```bash
-   # Create a virtual environment
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+### 1. Clone the Repository
 
-   # Install dependencies
-   pip install -r requirements.txt
-   ```
+First, download the source code to your machine using Git:
 
-3. **Running the Server:**
-   ```bash
-   uvicorn main:app --reload --port 8000
-   ```
+```bash
+git clone https://github.com/Viruss07/Last-Seen-AT.git
+cd Last-Seen-AT
+```
 
-4. **Play the Game:**
-   Open your browser and navigate to `http://localhost:8000/`.
+### 2. Set Up a Virtual Environment
+
+It's highly recommended to use a virtual environment to manage Python dependencies and avoid conflicting with system-wide packages.
+
+**On macOS / Linux:**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+**On Windows:**
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+
+With the virtual environment activated, install the required Python packages:
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Database Configuration (PostgreSQL)
+
+The game requires PostgreSQL to store session histories, suspects, and transcripts.
+
+1. Ensure PostgreSQL is installed and running on your system.
+2. The game expects a database named `last_seen_at` running locally on port `5432` by default. You can create it using the `psql` command-line tool:
+
+```bash
+# Example using psql
+psql -U postgres -c "CREATE DATABASE last_seen_at;"
+```
+
+*Note: If you have a different PostgreSQL setup (e.g., specific username/password), update the `DATABASE_URL` string inside `database.py`.*
+
+### 5. API Key Configuration
+
+Since this game relies on an LLM for character interrogation, you must provide a valid API key.
+
+Open `config.py` in the root directory and ensure your key is configured, or export it in your terminal before running the server:
+
+```bash
+export API_KEY="your-actual-api-key"
+```
+
+### 6. Start the Server
+
+Run the FastAPI backend using `uvicorn`:
+
+```bash
+uvicorn main:app --reload --port 8000
+```
+*(The `--reload` flag automatically restarts the server if you make changes to the code).*
+
+### 7. Play the Game
+
+Open your favorite web browser and navigate to:
+
+👉 **[http://localhost:8000/](http://localhost:8000/)**
 
 ## Gameplay
 
