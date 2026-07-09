@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Last Seen At — an AI-powered murder mystery. Five suspects. One truth per case.">
+<title>Last Seen At</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════
+   TOKENS
+═══════════════════════════════════ */
+:root {
+  --bg:          #0b0a07;
+  --bg2:         #13110d;
+  --bg3:         #1a1714;
+  --card:        #1f1c17;
+  --card2:       #252018;
+  --card3:       #2c261c;
+  --line:        #362f24;
+  --line2:       #4a4132;
+  --amber:       #d4973a;
+  --amber-glow:  #ebb864;
+  --amber-dim:   #7a5828;
+  --amber-deep:  #3d2b0e;
+  --red:         #9c3b2a;
+  --red-bright:  #c44d38;
+  --red-dim:     #5c2418;
+  --paper:       #ede4cf;
+  --paper-dim:   #a89b7d;
+  --ink:         #e8e0d0;
+  --ink-dim:     #9a9080;
+  --ink-faint:   #584e42;
+  --cork:        #3e2e1e;
+  --cork-mid:    #5a4228;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+
+body {
+  background: var(--bg);
+  font-family: 'Playfair Display', serif;
+  color: var(--ink);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* grain overlay */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.032'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ═══════════════════════════════════
+   SCREENS
+═══════════════════════════════════ */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; animation: fadeUp .45s ease both; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+
+/* ═══════════════════════════════════
+   SPLASH
+═══════════════════════════════════ */
+#s-splash {
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 38%, #1a1408 0%, var(--bg) 68%);
+  position: relative;
+  overflow: hidden;
+}
+#s-splash::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(to bottom, transparent 0, transparent 3px, rgba(0,0,0,.04) 3px, rgba(0,0,0,.04) 4px);
+  pointer-events: none;
+}
+.sp-corner { position: absolute; width: 56px; height: 56px; opacity: .25; }
+.sp-corner.tl { top:28px; left:28px; border-top:1px solid var(--amber-dim); border-left:1px solid var(--amber-dim); }
+.sp-corner.tr { top:28px; right:28px; border-top:1px solid var(--amber-dim); border-right:1px solid var(--amber-dim); }
+.sp-corner.bl { bottom:28px; left:28px; border-bottom:1px solid var(--amber-dim); border-left:1px solid var(--amber-dim); }
+.sp-corner.br { bottom:28px; right:28px; border-bottom:1px solid var(--amber-dim); border-right:1px solid var(--amber-dim); }
+.sp-badge { font-family:'Courier Prime',monospace; font-size:10px; letter-spacing:6px; text-transform:uppercase; color:var(--amber-dim); margin-bottom:22px; animation:fadeUp .8s .3s both; }
+.sp-title { font-size:clamp(54px,11vw,96px); font-weight:700; letter-spacing:8px; text-transform:uppercase; color:transparent; background:linear-gradient(180deg,var(--paper) 0%,var(--amber) 60%,var(--amber-dim) 100%); -webkit-background-clip:text; background-clip:text; line-height:1; filter:drop-shadow(0 0 40px rgba(212,151,58,.28)); animation:fadeUp .8s .5s both; }
+.sp-rule { width:180px; height:1px; background:linear-gradient(to right,transparent,var(--amber-dim),transparent); margin:22px auto; animation:fadeUp .6s .8s both; }
+.sp-sub { font-family:'IM Fell English',serif; font-style:italic; font-size:clamp(14px,2vw,17px); color:var(--ink-dim); margin-bottom:52px; text-align:center; padding:0 24px; animation:fadeUp .6s 1.0s both; }
+.sp-btn { background:transparent; border:1px solid var(--amber-dim); color:var(--amber); font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:4px; text-transform:uppercase; padding:15px 38px; border-radius:2px; cursor:pointer; transition:all .3s; animation:fadeUp .6s 1.3s both; }
+.sp-btn:hover { border-color:var(--amber); color:var(--amber-glow); box-shadow:0 0 28px rgba(212,151,58,.18); letter-spacing:6px; }
+
+/* ═══════════════════════════════════
+   ARCHIVE
+═══════════════════════════════════ */
+#s-archive { background:var(--bg); }
+.arc-head { background:linear-gradient(180deg,var(--bg2) 0%,var(--bg) 100%); border-bottom:1px solid var(--line); padding:44px 24px 32px; text-align:center; }
+.arc-badge-row { display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:22px; }
+.det-badge { width:52px; height:52px; border-radius:50%; border:2px solid var(--amber-dim); background:var(--card2); display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow:0 0 18px rgba(212,151,58,.12); }
+.det-rank { font-family:'Courier Prime',monospace; font-size:9px; letter-spacing:3px; text-transform:uppercase; color:var(--amber-dim); }
+.det-name { font-size:20px; color:var(--paper); }
+.arc-stats { display:flex; justify-content:center; gap:44px; margin-top:24px; flex-wrap:wrap; }
+.arc-stat-val { display:block; font-size:34px; color:var(--amber); line-height:1; margin-bottom:3px; }
+.arc-stat-lbl { font-family:'Courier Prime',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--ink-faint); }
+.wrap { max-width:900px; margin:0 auto; padding:0 24px; }
+.sec-head { display:flex; align-items:center; gap:12px; margin:32px 0 18px; }
+.sec-lbl { font-family:'Courier Prime',monospace; font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--amber); white-space:nowrap; }
+.sec-rule { flex:1; height:1px; background:var(--line); }
+.new-case-box { background:var(--card); border:1px dashed var(--amber-dim); border-radius:6px; padding:32px; text-align:center; cursor:pointer; transition:border-color .3s,background .3s; }
+.new-case-box:hover { border-color:var(--amber); background:var(--card2); }
+.new-case-box h2 { font-size:21px; color:var(--paper); margin-bottom:7px; }
+.new-case-box p { font-family:'IM Fell English',serif; font-style:italic; font-size:14px; color:var(--ink-dim); margin-bottom:20px; }
+.hist-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; padding-bottom:80px; }
+.hist-empty { grid-column:1/-1; text-align:center; padding:44px; font-family:'IM Fell English',serif; font-style:italic; font-size:14px; color:var(--ink-faint); background:var(--card); border:1px dashed var(--line); border-radius:6px; }
+.hist-card { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:18px; position:relative; overflow:hidden; }
+.hist-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.hist-card.solved::before { background:linear-gradient(to right,var(--amber-dim),var(--amber)); }
+.hist-card.failed::before { background:linear-gradient(to right,var(--red-dim),var(--red)); }
+.hc-num { font-family:'Courier Prime',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--ink-faint); margin-bottom:6px; }
+.hc-victim { font-family:'IM Fell English',serif; font-style:italic; font-size:13px; color:var(--ink-dim); margin-bottom:3px; }
+.hc-verdict { font-family:'Courier Prime',monospace; font-size:11px; margin-bottom:10px; }
+.hc-verdict.solved { color:var(--amber); }
+.hc-verdict.failed { color:var(--red); }
+.hc-meta { display:flex; gap:14px; font-family:'Courier Prime',monospace; font-size:10px; color:var(--ink-faint); }
+.hc-stars { position:absolute; top:12px; right:12px; color:var(--amber-dim); font-size:11px; }
+.arc-err { text-align:center; color:var(--red-bright); font-family:'Courier Prime',monospace; font-size:11px; margin-top:14px; }
+
+
+/* ═══════════════════════════════════
+   BRIEFING
+═══════════════════════════════════ */
+#s-briefing {
+  background: var(--bg);
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+.briefing-content {
+  max-width: 600px;
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  animation: fadeUp .6s ease both;
+}
+.br-case-id {
+  font-family: 'Courier Prime', monospace;
+  font-size: 11px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--amber-dim);
+  margin-bottom: 20px;
+}
+.br-headline {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  color: var(--paper);
+  margin-bottom: 30px;
+  line-height: 1.3;
+}
+.br-story {
+  font-family: 'IM Fell English', serif;
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--ink);
+  margin-bottom: 40px;
+  text-align: left;
+  border-top: 1px dashed var(--line2);
+  border-bottom: 1px dashed var(--line2);
+  padding: 24px 0;
+}
+.br-story p { margin-bottom: 16px; }
+.br-story p:last-child { margin-bottom: 0; }
+
+/* ═══════════════════════════════════
+   GAME SCREEN — LAYOUT
+═══════════════════════════════════ */
+#s-game {
+  display: none;
+  flex-direction: column;
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+}
+#s-game.active { display: flex; }
+
+/* ── Status Bar (slim, always visible) ── */
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding: 0 20px;
+  background: rgba(11,10,7,0.97);
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+  z-index: 100;
+}
+.sb-left { display:flex; align-items:center; gap:16px; }
+.sb-back { background:none; border:none; color:var(--ink-faint); font-family:'Courier Prime',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; cursor:pointer; transition:color .2s; padding:0; }
+.sb-back:hover { color:var(--amber); }
+.sb-case-id { font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:2px; color:var(--amber-dim); }
+.sb-center { display:flex; align-items:center; gap:6px; }
+.sb-pip { width:22px; height:5px; border-radius:2px; background:var(--amber-dim); transition:background .4s,transform .3s; }
+.sb-pip.spent { background:var(--line2); transform:scaleY(.5); }
+.sb-q-count { font-family:'Courier Prime',monospace; font-size:11px; color:var(--ink-dim); margin-left:8px; }
+.sb-q-count b { color:var(--amber); }
+.sb-timer { font-family:'Courier Prime',monospace; font-size:11px; color:var(--ink-faint); letter-spacing:1px; }
+
+/* ── Workspace: sidebar + main ── */
+.workspace {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.ws-sidebar {
+  background: var(--bg2);
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 0 100px;
+  display: flex;
+  flex-direction: column;
+}
+.ws-sidebar::-webkit-scrollbar { width: 4px; }
+.ws-sidebar::-webkit-scrollbar-track { background: transparent; }
+.ws-sidebar::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 2px; }
+
+/* Case brief (in sidebar) */
+.sidebar-case {
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.sc-stamp {
+  display: inline-block;
+  border: 1.5px solid var(--red);
+  color: var(--red);
+  font-family: 'Courier Prime', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  transform: rotate(-1.5deg);
+  margin-bottom: 14px;
+  box-shadow: 1px 1px 0 rgba(156,59,42,.25);
+}
+.sc-headline {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px;
+  color: var(--paper);
+  line-height: 1.4;
+  margin-bottom: 14px;
+}
+.sc-meta { display: flex; flex-direction: column; gap: 8px; }
+.sc-row b { display:block; font-family:'Courier Prime',monospace; font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--amber-dim); margin-bottom:2px; }
+.sc-row span { font-family:'Courier Prime',monospace; font-size:11px; color:var(--ink-dim); }
+
+/* Confidence (in sidebar) */
+.sidebar-conf {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.sc-conf-label { font-family:'Courier Prime',monospace; font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--ink-faint); margin-bottom:8px; }
+.conf-track { height:4px; background:var(--line); border-radius:2px; overflow:hidden; }
+.conf-fill { height:100%; background:linear-gradient(to right,var(--amber-dim),var(--amber),var(--red)); border-radius:2px; width:0%; transition:width 1.2s cubic-bezier(.4,0,.2,1); }
+.conf-desc { font-family:'Courier Prime',monospace; font-size:9px; color:var(--ink-faint); margin-top:6px; }
+
+/* Evidence strip (in sidebar) */
+.sidebar-ev {
+  padding: 16px 20px 0;
+}
+.sev-label { font-family:'Courier Prime',monospace; font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--amber-dim); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
+.sev-label button { background:none; border:none; color:var(--amber-dim); font-family:'Courier Prime',monospace; font-size:8px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:color .2s; }
+.sev-label button:hover { color:var(--amber); }
+.sev-thumbs { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.sev-thumb {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 10px 8px;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+.sev-thumb:hover { border-color:var(--amber-dim); background:var(--card2); }
+.sev-thumb.active-ev { border-color:var(--amber); }
+.sev-t-icon { font-size:16px; display:block; margin-bottom:4px; }
+.sev-t-label { font-family:'Courier Prime',monospace; font-size:9px; color:var(--ink-faint); line-height:1.3; }
+
+/* Evidence expanded (in sidebar) */
+.sev-detail {
+  margin: 12px 20px 0;
+  background: var(--card);
+  border: 1px solid var(--line2);
+  border-radius: 5px;
+  padding: 14px;
+  animation: fadeUp .3s ease;
+}
+.sev-d-tag { font-family:'Courier Prime',monospace; font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--amber-dim); margin-bottom:5px; }
+.sev-d-body { font-family:'IM Fell English',serif; font-style:italic; font-size:12.5px; line-height:1.65; color:var(--ink); margin-bottom:8px; }
+.sev-d-note { font-family:'Courier Prime',monospace; font-size:9px; color:var(--ink-faint); }
+
+/* ── Main Suspects Area ── */
+.ws-main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+.ws-main-top {
+  padding: 20px 24px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.wmt-title { font-family:'Courier Prime',monospace; font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--amber); }
+.guidance-text { font-family:'IM Fell English',serif; font-style:italic; font-size:13px; color:var(--ink-dim); }
+
+/* Suspects grid + interrogation panel */
+.ws-content { flex:1; overflow:hidden; display:flex; flex-direction:column; }
+
+/* Suspect cards */
+.suspects-area {
+  padding: 20px 24px 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  flex-shrink: 0;
+}
+.susp-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px 10px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: border-color .25s, background .25s, transform .2s, box-shadow .25s;
+}
+.susp-card:hover:not(.exhausted) { border-color:var(--amber-dim); background:var(--card2); transform:translateY(-3px); box-shadow:0 10px 28px rgba(0,0,0,.45); }
+.susp-card.active { border-color:var(--amber); background:var(--card2); box-shadow:0 0 0 2px rgba(212,151,58,.14); transform:translateY(-3px); }
+.susp-card.exhausted { opacity:.4; cursor:default; }
+.susp-card.questioned { border-color:var(--line2); }
+.sc-dot {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--line2);
+}
+.susp-card.questioned .sc-dot { background:var(--amber-dim); }
+.susp-card.active .sc-dot { background:var(--amber); box-shadow:0 0 6px var(--amber); }
+.sc-av { width:48px; height:48px; border-radius:50%; background:var(--card3); border:2px solid var(--line2); margin:0 auto 10px; display:flex; align-items:center; justify-content:center; font-family:'Courier Prime',monospace; font-size:18px; color:var(--amber-dim); transition:border-color .25s,color .25s; }
+.susp-card.active .sc-av { border-color:var(--amber); color:var(--amber); }
+.sc-name { font-size:13px; color:var(--paper); margin-bottom:2px; }
+.sc-role { font-family:'Courier Prime',monospace; font-size:9px; text-transform:uppercase; letter-spacing:1px; color:var(--ink-faint); margin-bottom:8px; }
+.sc-sus { display:flex; justify-content:center; gap:3px; }
+.sc-sus-pip { width:7px; height:7px; border-radius:50%; border:1px solid var(--line2); cursor:pointer; transition:background .2s,border-color .2s; }
+.sc-sus-pip.lit { background:var(--amber-dim); border-color:var(--amber); }
+.sc-sus-pip.hot { background:var(--red); border-color:var(--red-bright); }
+
+/* ── Interrogation Panel (slides up inside ws-content) ── */
+.int-panel {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line);
+  background: var(--bg3);
+  transform: translateY(100%);
+  transition: transform .4s cubic-bezier(.4,0,.2,1);
+}
+.int-panel.open { transform: translateY(0); }
+
+.int-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--card2);
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.iph-left { display:flex; align-items:center; gap:12px; }
+.iph-av { width:32px; height:32px; border-radius:50%; background:var(--card3); border:1px solid var(--amber-dim); display:flex; align-items:center; justify-content:center; font-family:'Courier Prime',monospace; font-size:13px; color:var(--amber); }
+.iph-name { font-size:14px; color:var(--paper); }
+.iph-role { font-family:'Courier Prime',monospace; font-size:9px; text-transform:uppercase; letter-spacing:1px; color:var(--ink-faint); }
+.iph-close { background:none; border:none; color:var(--ink-faint); font-size:16px; cursor:pointer; transition:color .2s; padding:4px; line-height:1; }
+.iph-close:hover { color:var(--ink); }
+
+.int-panel-body {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  flex: 1;
+  overflow: hidden;
+}
+.int-left {
+  padding: 18px 16px;
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.int-left::-webkit-scrollbar { width:3px; }
+.int-left::-webkit-scrollbar-thumb { background:var(--line2); border-radius:2px; }
+.il-personality-lbl { font-family:'Courier Prime',monospace; font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--ink-faint); margin-bottom:4px; }
+.il-personality { font-family:'IM Fell English',serif; font-style:italic; font-size:12px; color:var(--ink-faint); line-height:1.6; }
+.il-notes-lbl { font-family:'Courier Prime',monospace; font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--ink-faint); margin-bottom:4px; }
+.il-notes { width:100%; background:var(--bg2); border:1px solid var(--line); color:var(--ink); font-family:'Courier Prime',monospace; font-size:10px; padding:8px; border-radius:3px; resize:none; height:64px; line-height:1.5; }
+.il-notes:focus { outline:none; border-color:var(--amber-dim); }
+
+.int-right {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  overflow: hidden;
+}
+.int-topics-col {
+  padding: 18px 14px;
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.int-topics-col::-webkit-scrollbar { width:3px; }
+.itc-lbl { font-family:'Courier Prime',monospace; font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--ink-faint); margin-bottom:2px; }
+.topic-btn {
+  font-family: 'Courier Prime', monospace;
+  font-size: 11px;
+  padding: 10px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--amber-dim);
+  color: var(--amber);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background .2s, border-color .2s, color .2s, transform .15s;
+  position: relative;
+}
+.topic-btn::after { content:'→'; position:absolute; right:10px; top:50%; transform:translateY(-50%); opacity:0; transition:opacity .2s, right .2s; }
+.topic-btn:hover:not(:disabled)::after { opacity:1; right:6px; }
+.topic-btn:hover:not(:disabled) { background:var(--amber-deep); border-color:var(--amber); color:var(--amber-glow); transform:translateX(3px); }
+.topic-btn:disabled, .topic-btn.used { border-color:var(--line); color:var(--ink-faint); cursor:not-allowed; text-decoration:line-through; text-decoration-color:var(--ink-faint); }
+.topic-btn.used:hover { transform:none; }
+
+.int-transcript-col {
+  padding: 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.int-transcript-col::-webkit-scrollbar { width:4px; }
+.int-transcript-col::-webkit-scrollbar-thumb { background:var(--line2); border-radius:2px; }
+.itc-empty { font-family:'IM Fell English',serif; font-style:italic; font-size:13px; color:var(--ink-faint); padding-top:4px; }
+.bubble {
+  background: var(--card);
+  border-left: 3px solid var(--amber-dim);
+  border-radius: 0 6px 6px 0;
+  padding: 12px 16px;
+  animation: fadeUp .4s ease;
+}
+.bubble.sus { border-left-color:var(--red); }
+.bubble-q { font-family:'Courier Prime',monospace; font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--paper-dim); margin-bottom:7px; }
+.bubble-a { font-family:'IM Fell English',serif; font-style:italic; font-size:14px; line-height:1.7; color:var(--ink); }
+.bubble-flag { display:inline-block; margin-top:7px; font-family:'Courier Prime',monospace; font-size:9px; padding:2px 8px; border-radius:2px; }
+.bf-sus { background:rgba(156,59,42,.15); color:var(--red-bright); border:1px solid rgba(156,59,42,.3); }
+
+/* thinking animation */
+.thinking { display:flex; align-items:center; gap:10px; padding:10px 0; font-family:'IM Fell English',serif; font-style:italic; font-size:13px; color:var(--ink-dim); }
+.t-dots { display:flex; gap:4px; }
+.t-dot { width:5px; height:5px; border-radius:50%; background:var(--amber-dim); animation:tdot 1.3s ease infinite; }
+.t-dot:nth-child(2){animation-delay:.2s} .t-dot:nth-child(3){animation-delay:.4s}
+@keyframes tdot { 0%,100%{opacity:.2;transform:scale(.7)} 50%{opacity:1;transform:scale(1)} }
+
+/* typing cursor */
+.typing-cursor { display:inline-block; width:2px; height:13px; background:var(--amber); vertical-align:middle; margin-left:1px; animation:blink .75s step-end infinite; }
+@keyframes blink { 50%{opacity:0} }
+
+/* ── Bottom Dock ── */
+.bottom-dock {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  align-items: center;
+  gap: 6px;
+  background: rgba(19,17,13,0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--line2);
+  border-radius: 50px;
+  padding: 8px 12px;
+  box-shadow: 0 8px 40px rgba(0,0,0,.7);
+  z-index: 200;
+}
+#s-game.active .bottom-dock { display: flex; }
+.dock-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  border-radius: 40px;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+  color: var(--ink-faint);
+  position: relative;
+}
+.dock-btn:hover { background:var(--card3); color:var(--amber); }
+.dock-btn.active-dock { color:var(--amber); background:var(--amber-deep); }
+.dock-icon { font-size:16px; line-height:1; }
+.dock-label { font-family:'Courier Prime',monospace; font-size:8px; letter-spacing:1px; text-transform:uppercase; }
+.dock-divider { width:1px; height:28px; background:var(--line); margin:0 2px; }
+.dock-accuse {
+  background: var(--red-dim);
+  color: var(--red-bright) !important;
+  border-radius: 40px;
+  border: 1px solid var(--red);
+}
+.dock-accuse:hover { background:var(--red); color:var(--paper) !important; }
+.dock-accuse.pulse { animation: accusePulse 2s ease infinite; }
+@keyframes accusePulse { 0%,100%{box-shadow:0 0 0 0 rgba(156,59,42,.4)} 50%{box-shadow:0 0 0 8px rgba(156,59,42,.0)} }
+
+/* ── badge/pulse on dock (notification) ── */
+.dock-badge {
+  position: absolute;
+  top: 3px; right: 8px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 6px var(--amber);
+  animation: badgePop .3s ease;
+}
+@keyframes badgePop { from{transform:scale(0)} to{transform:scale(1)} }
+
+/* ═══════════════════════════════════
+   OVERLAYS (Board / Timeline / Deduction / Accuse)
+═══════════════════════════════════ */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: var(--bg);
+  transform: translateY(100%);
+  transition: transform .42s cubic-bezier(.4,0,.2,1);
+  display: flex;
+  flex-direction: column;
+}
+.overlay.open { transform: translateY(0); }
+
+.ov-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 52px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.ov-title { font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--amber); }
+.ov-close { background:none; border:none; color:var(--ink-faint); font-size:18px; cursor:pointer; transition:color .2s; padding:4px; line-height:1; }
+.ov-close:hover { color:var(--ink); }
+.ov-body { flex:1; overflow-y:auto; padding:28px 24px 100px; max-width:920px; margin:0 auto; width:100%; }
+.ov-body::-webkit-scrollbar { width:4px; }
+.ov-body::-webkit-scrollbar-thumb { background:var(--line2); border-radius:2px; }
+
+/* ── Board overlay ── */
+.cork-outer { background:var(--cork); border-radius:8px; padding:28px; box-shadow:inset 0 0 40px rgba(0,0,0,.5); position:relative; overflow:hidden; }
+.cork-outer::before { content:''; position:absolute; inset:0; background-image:repeating-linear-gradient(43deg,transparent 0,transparent 7px,rgba(0,0,0,.03) 7px,rgba(0,0,0,.03) 8px),repeating-linear-gradient(-43deg,transparent 0,transparent 9px,rgba(0,0,0,.02) 9px,rgba(0,0,0,.02) 10px); pointer-events:none; }
+.cork-label { font-family:'Courier Prime',monospace; font-size:9px; letter-spacing:3px; text-transform:uppercase; color:var(--cork-mid); text-align:center; margin-bottom:18px; }
+.board-empty { text-align:center; padding:48px; font-family:'IM Fell English',serif; font-style:italic; font-size:14px; color:var(--cork-mid); }
+.pins-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(165px,1fr)); gap:22px; }
+.pin-card { background:#f5ecda; color:#261e10; border-radius:2px; padding:15px 13px 13px; box-shadow:3px 5px 14px rgba(0,0,0,.55); position:relative; min-height:130px; transition:transform .2s,box-shadow .2s; }
+.pin-card:hover { transform:rotate(.3deg) translateY(-3px); box-shadow:5px 8px 20px rgba(0,0,0,.6); }
+.pin-card::before { content:''; position:absolute; top:-9px; left:50%; transform:translateX(-50%); width:13px; height:13px; border-radius:50%; background:radial-gradient(circle at 35% 35%,#dd4444,#881818); box-shadow:0 2px 5px rgba(0,0,0,.6); }
+.pin-name { font-family:'Courier Prime',monospace; font-weight:700; font-size:11px; color:#1a1208; margin-bottom:8px; padding-bottom:7px; border-bottom:1px solid rgba(0,0,0,.12); }
+.pin-entry { margin-bottom:6px; font-family:Georgia,serif; font-size:10.5px; line-height:1.5; color:#2e240e; }
+.pin-topic { font-family:'Courier Prime',monospace; font-size:7px; letter-spacing:1px; text-transform:uppercase; color:#7a6030; display:block; margin-bottom:2px; }
+.pin-note { font-family:Georgia,serif; font-style:italic; font-size:10.5px; color:#5a4820; margin-top:7px; padding-top:5px; border-top:1px dashed rgba(0,0,0,.15); }
+.pin-flag { display:inline-block; margin-top:8px; font-family:'Courier Prime',monospace; font-size:7px; letter-spacing:1px; text-transform:uppercase; padding:2px 7px; border-radius:2px; }
+.pf-conflict { background:rgba(200,60,40,.15); color:#9e3020; border:1px solid rgba(200,60,40,.3); }
+.pf-watch    { background:rgba(180,130,30,.15); color:#7a5010; border:1px solid rgba(180,130,30,.3); }
+.pf-clean    { background:rgba(50,120,70,.1); color:#3a7040; border:1px solid rgba(50,120,70,.2); }
+.conflict-strip { margin-top:16px; display:flex; flex-direction:column; gap:8px; }
+.conflict-alert { display:flex; align-items:flex-start; gap:10px; background:rgba(156,59,42,.08); border:1px solid rgba(156,59,42,.25); border-radius:4px; padding:11px 14px; font-family:'Courier Prime',monospace; font-size:10px; color:var(--red-bright); animation:fadeUp .4s ease; }
+
+/* ── Timeline overlay ── */
+.tl-wrap { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:24px; overflow-x:auto; }
+.tl-head { font-family:'Playfair Display',serif; font-size:17px; color:var(--paper); margin-bottom:6px; }
+.tl-sub  { font-family:'IM Fell English',serif; font-style:italic; font-size:13px; color:var(--ink-dim); margin-bottom:22px; }
+.tl-ruler { display:flex; margin-bottom:6px; padding-left:126px; }
+.ruler-tick { flex:1; font-family:'Courier Prime',monospace; font-size:9px; color:var(--ink-faint); text-align:center; border-left:1px solid var(--line); padding-top:3px; padding-bottom:5px; }
+.tl-mbar { position:relative; height:16px; margin-left:126px; background:var(--line); border-radius:3px; margin-bottom:18px; }
+.murder-zone { position:absolute; height:100%; background:rgba(156,59,42,.4); border:1px solid var(--red); border-radius:2px; display:flex; align-items:center; justify-content:center; }
+.mz-label { font-family:'Courier Prime',monospace; font-size:7px; letter-spacing:1px; text-transform:uppercase; color:var(--red-bright); white-space:nowrap; padding:0 6px; }
+.tl-row { display:flex; align-items:center; margin-bottom:10px; min-height:34px; }
+.tl-slabel { width:126px; flex-shrink:0; font-family:'Courier Prime',monospace; font-size:10px; color:var(--ink-dim); padding-right:12px; }
+.tl-track { flex:1; height:28px; background:var(--bg2); border:1px solid var(--line); border-radius:4px; position:relative; overflow:hidden; }
+.tl-shade { position:absolute; top:0; height:100%; background:rgba(156,59,42,.08); border-left:1px dashed rgba(156,59,42,.3); border-right:1px dashed rgba(156,59,42,.3); }
+.tl-claimed { position:absolute; top:4px; height:calc(100% - 8px); background:rgba(212,151,58,.25); border:1px solid var(--amber-dim); border-radius:3px; display:flex; align-items:center; padding:0 7px; transition:all .6s cubic-bezier(.4,0,.2,1); }
+.tl-claimed-lbl { font-family:'Courier Prime',monospace; font-size:9px; color:var(--amber); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tl-nodata { font-family:'Courier Prime',monospace; font-size:9px; color:var(--ink-faint); position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); }
+
+/* ── Deduction overlay ── */
+.ded-intro { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:18px 20px; margin-bottom:20px; font-family:'IM Fell English',serif; font-style:italic; font-size:14px; color:var(--ink-dim); line-height:1.7; }
+.ded-table { background:var(--card); border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-bottom:20px; }
+.ded-head { display:grid; grid-template-columns:150px repeat(4,1fr) 110px; background:var(--card2); border-bottom:1px solid var(--line); }
+.ded-col-h { padding:10px 8px; font-family:'Courier Prime',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--ink-faint); text-align:center; border-right:1px solid var(--line); }
+.ded-col-h:first-child { text-align:left; } .ded-col-h:last-child { border-right:none; }
+.ded-row { display:grid; grid-template-columns:150px repeat(4,1fr) 110px; border-bottom:1px solid var(--line); }
+.ded-row:last-child { border-bottom:none; }
+.ded-cell { padding:12px 8px; border-right:1px solid var(--line); font-family:'Courier Prime',monospace; font-size:10px; color:var(--ink-dim); text-align:center; }
+.ded-cell:first-child { text-align:left; border-right:2px solid var(--line2); }
+.ded-cell:last-child { border-right:none; }
+.ded-sname { font-family:'Playfair Display',serif; font-size:13px; color:var(--paper); margin-bottom:2px; }
+.ded-srole  { font-family:'Courier Prime',monospace; font-size:8px; text-transform:uppercase; color:var(--ink-faint); letter-spacing:1px; }
+.ded-cell.has-data { background:rgba(212,151,58,.03); color:var(--ink); }
+.ded-cell.evasive   { background:rgba(212,151,58,.07); }
+.ded-cell.suspicious{ background:rgba(156,59,42,.08); color:var(--red-bright); }
+.ded-snippet { font-size:10px; line-height:1.4; max-height:40px; overflow:hidden; font-style:italic; }
+.ded-empty { color:var(--ink-faint); font-size:10px; }
+.sus-wrap { display:flex; flex-direction:column; align-items:center; gap:4px; padding:12px 6px; }
+.sus-stars { display:flex; gap:3px; }
+.sus-star { width:13px; height:13px; border-radius:50%; border:1px solid var(--line2); cursor:pointer; transition:background .2s,transform .15s; }
+.sus-star:hover { transform:scale(1.2); }
+.sus-star.lit { background:var(--amber-dim); border-color:var(--amber); }
+.sus-star.hot { background:var(--red); border-color:var(--red-bright); }
+.sus-lbl { font-family:'Courier Prime',monospace; font-size:8px; color:var(--ink-faint); text-align:center; letter-spacing:1px; }
+
+/* ── Accuse overlay ── */
+.acc-pre { font-family:'IM Fell English',serif; font-style:italic; font-size:15px; color:var(--ink-dim); line-height:1.8; margin-bottom:24px; padding:18px 22px; background:var(--card); border:1px solid var(--line); border-radius:6px; }
+.acc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(135px,1fr)); gap:12px; margin-bottom:24px; }
+.acc-card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px 10px; text-align:center; cursor:pointer; transition:border-color .25s,background .25s,transform .2s; }
+.acc-card:hover { border-color:var(--line2); background:var(--card2); transform:translateY(-3px); }
+.acc-card.chosen { border-color:var(--red); background:var(--card2); box-shadow:0 0 0 2px rgba(156,59,42,.18),0 8px 24px rgba(0,0,0,.4); transform:translateY(-4px); }
+.acc-av { width:46px; height:46px; border-radius:50%; background:var(--card3); border:1px solid var(--line); margin:0 auto 10px; display:flex; align-items:center; justify-content:center; font-family:'Courier Prime',monospace; font-size:18px; color:var(--ink-dim); transition:border-color .25s,color .25s; }
+.acc-card.chosen .acc-av { border-color:var(--red); color:var(--red-bright); }
+.acc-name { font-size:12px; color:var(--paper); margin-bottom:2px; }
+.acc-role { font-family:'Courier Prime',monospace; font-size:9px; text-transform:uppercase; color:var(--ink-faint); letter-spacing:1px; }
+.acc-bar { margin-top:8px; height:3px; border-radius:2px; background:var(--line); overflow:hidden; }
+.acc-bar-fill { height:100%; background:linear-gradient(to right,var(--amber-dim),var(--red)); border-radius:2px; transition:width .4s; }
+
+/* ── Accusation confirmation overlay ── */
+.conf-overlay { position:fixed; inset:0; z-index:800; background:rgba(11,10,7,.97); display:flex; align-items:center; justify-content:center; padding:24px; opacity:0; pointer-events:none; transition:opacity .4s; }
+.conf-overlay.show { opacity:1; pointer-events:all; }
+.conf-inner { max-width:480px; width:100%; text-align:center; animation:confIn .5s .15s cubic-bezier(.4,0,.2,1) both; }
+@keyframes confIn { from{opacity:0;transform:scale(.94) translateY(16px)} to{opacity:1;transform:none} }
+.conf-eyebrow { font-family:'Courier Prime',monospace; font-size:10px; letter-spacing:4px; text-transform:uppercase; color:var(--ink-faint); margin-bottom:18px; }
+.conf-name { font-size:clamp(28px,6vw,46px); color:var(--paper); margin-bottom:6px; line-height:1.1; }
+.conf-role { font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--amber-dim); margin-bottom:28px; }
+.conf-rule { width:80px; height:1px; background:var(--line2); margin:0 auto 24px; }
+.conf-text { font-family:'IM Fell English',serif; font-style:italic; font-size:15px; color:var(--ink-dim); margin-bottom:32px; line-height:1.7; }
+.conf-btns { display:flex; gap:12px; justify-content:center; }
+
+/* ═══════════════════════════════════
+   REVEAL SCREEN
+═══════════════════════════════════ */
+#s-reveal { background:var(--bg); }
+.rv-hero { background:radial-gradient(ellipse at 50% 0%,var(--card2) 0%,var(--bg) 70%); border-bottom:1px solid var(--line); padding:56px 24px 44px; text-align:center; }
+.rv-eyebrow { font-family:'Courier Prime',monospace; font-size:10px; letter-spacing:6px; text-transform:uppercase; margin-bottom:18px; }
+.rv-eyebrow.correct { color:var(--amber); } .rv-eyebrow.wrong { color:var(--red); }
+.rv-stamp { display:inline-block; font-family:'Courier Prime',monospace; font-size:13px; letter-spacing:6px; text-transform:uppercase; color:var(--amber); border:2px solid var(--amber-dim); padding:7px 22px; margin-bottom:28px; animation:stampIn .5s .2s cubic-bezier(.4,0,.2,1) both; }
+.rv-stamp.wrong { color:var(--red); border-color:var(--red-dim); }
+@keyframes stampIn { from{opacity:0;transform:rotate(-5deg) scale(1.15)} to{opacity:1;transform:rotate(-1deg) scale(1)} }
+.rv-murderer { font-size:clamp(26px,5vw,42px); color:var(--paper); line-height:1.1; margin-bottom:5px; }
+.rv-mrole { font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--ink-dim); margin-bottom:28px; }
+.rv-confession { font-family:'IM Fell English',serif; font-style:italic; font-size:clamp(14px,2.5vw,17px); color:var(--ink); max-width:520px; margin:0 auto 32px; line-height:1.8; padding:22px 0; border-top:1px dashed var(--line2); border-bottom:1px dashed var(--line2); }
+.rv-stats { display:flex; justify-content:center; gap:36px; flex-wrap:wrap; }
+.rv-sv { font-size:34px; color:var(--amber); display:block; line-height:1; margin-bottom:5px; }
+.rv-sl { font-family:'Courier Prime',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--ink-faint); }
+.rv-section { max-width:900px; margin:0 auto; padding:0 24px; }
+.achiev-row { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:24px 0; }
+.achiev-badge { background:var(--card2); border:1px solid var(--amber-dim); border-radius:6px; padding:10px 16px; text-align:center; animation:badgeIn .4s cubic-bezier(.4,0,.2,1) both; }
+@keyframes badgeIn { from{opacity:0;transform:scale(.8) translateY(8px)} to{opacity:1;transform:none} }
+.achiev-badge:nth-child(2){animation-delay:.08s} .achiev-badge:nth-child(3){animation-delay:.16s} .achiev-badge:nth-child(4){animation-delay:.24s}
+.ab-icon { font-size:20px; display:block; margin-bottom:5px; }
+.ab-name { font-family:'Courier Prime',monospace; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); display:block; margin-bottom:2px; }
+.ab-desc { font-family:'Courier Prime',monospace; font-size:9px; color:var(--ink-faint); }
+.bd-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; margin-top:14px; padding-bottom:60px; }
+.bd-card { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:18px; }
+.bd-card.murderer { border-color:var(--red); background:rgba(156,59,42,.05); }
+.bd-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.bd-av { width:34px; height:34px; border-radius:50%; background:var(--card3); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-family:'Courier Prime',monospace; font-size:13px; color:var(--amber-dim); flex-shrink:0; }
+.bd-card.murderer .bd-av { border-color:var(--red); color:var(--red-bright); }
+.bd-name { font-size:14px; color:var(--paper); }
+.bd-role { font-family:'Courier Prime',monospace; font-size:9px; text-transform:uppercase; color:var(--ink-faint); letter-spacing:1px; }
+.bd-truth-l { font-family:'Courier Prime',monospace; font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--ink-faint); margin-bottom:5px; }
+.bd-truth { font-family:'IM Fell English',serif; font-style:italic; font-size:12.5px; color:var(--ink-dim); line-height:1.6; }
+
+/* ═══════════════════════════════════
+   SHARED
+═══════════════════════════════════ */
+.btn { display:inline-flex; align-items:center; gap:7px; font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; border:none; border-radius:4px; padding:12px 22px; cursor:pointer; transition:background .2s,transform .15s,box-shadow .2s; }
+.btn:active { transform:translateY(1px); }
+.btn:disabled { opacity:.4; cursor:not-allowed; transform:none !important; }
+.btn-primary { background:var(--amber); color:#1a1200; box-shadow:0 4px 16px rgba(212,151,58,.2); }
+.btn-primary:hover:not(:disabled) { background:var(--amber-glow); box-shadow:0 6px 24px rgba(212,151,58,.35); transform:translateY(-1px); }
+.btn-ghost { background:transparent; color:var(--amber); border:1px solid var(--amber-dim); }
+.btn-ghost:hover:not(:disabled) { background:var(--amber-deep); border-color:var(--amber); }
+.btn-danger { background:var(--red); color:var(--paper); box-shadow:0 4px 16px rgba(156,59,42,.25); }
+.btn-danger:hover:not(:disabled) { background:var(--red-bright); box-shadow:0 6px 24px rgba(196,77,56,.4); transform:translateY(-1px); }
+.btn-sm { padding:9px 16px; font-size:10px; }
+
+/* loading */
+.loading-ov { position:fixed; inset:0; background:rgba(11,10,7,.9); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:900; opacity:0; pointer-events:none; transition:opacity .3s; }
+.loading-ov.show { opacity:1; pointer-events:all; }
+.spin { width:40px; height:40px; border:2px solid var(--line2); border-top-color:var(--amber); border-radius:50%; animation:spin .9s linear infinite; margin-bottom:16px; }
+@keyframes spin { to{transform:rotate(360deg)} }
+.loading-t { font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--ink-dim); }
+
+/* toast */
+.toast { position:fixed; bottom:96px; left:50%; transform:translateX(-50%) translateY(14px); background:var(--card3); border:1px solid var(--amber-dim); color:var(--amber); font-family:'Courier Prime',monospace; font-size:11px; letter-spacing:1px; padding:11px 22px; border-radius:4px; box-shadow:0 8px 28px rgba(0,0,0,.6); opacity:0; transition:opacity .3s,transform .3s; z-index:1000; pointer-events:none; max-width:380px; text-align:center; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* divider */
+.divider { height:1px; background:linear-gradient(to right,transparent,var(--line2),transparent); margin:28px 0; }
+
+/* paper-dim */
+--paper-dim: #a89b7d;
+.paper-dim { color: var(--paper-dim); }
+
+@media(max-width:860px) {
+  .workspace { grid-template-columns:1fr; }
+  .ws-sidebar { display:none; }
+  .suspects-area { grid-template-columns:repeat(3,1fr); }
+  .int-panel-body { grid-template-columns:1fr; }
+  .int-right { grid-template-columns:1fr; }
+  .int-topics-col { border-right:none; border-bottom:1px solid var(--line); }
+  .ded-head,.ded-row { grid-template-columns:100px repeat(4,1fr) 80px; }
+}
+@media(max-width:560px) {
+  .suspects-area { grid-template-columns:repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div class="loading-ov" id="loading-ov">
+  <div class="spin"></div>
+  <div class="loading-t" id="loading-t">Opening the file…</div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Accusation confirmation -->
+<div class="conf-overlay" id="conf-overlay">
+  <div class="conf-inner">
+    <div class="conf-eyebrow">Final Accusation</div>
+    <div class="conf-name" id="co-name"></div>
+    <div class="conf-role" id="co-role"></div>
+    <div class="conf-rule"></div>
+    <div class="conf-text" id="co-text"></div>
+    <div class="conf-btns">
+      <button class="btn btn-danger" id="co-confirm">I'm certain — accuse →</button>
+      <button class="btn btn-ghost" onclick="closeConfirm()">Not yet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ SPLASH ═══════════════ -->
+<div class="screen active" id="s-splash">
+  <div class="sp-corner tl"></div><div class="sp-corner tr"></div>
+  <div class="sp-corner bl"></div><div class="sp-corner br"></div>
+  <div class="sp-badge">A murder mystery · played with AI</div>
+  <div class="sp-title">Last Seen At</div>
+  <div class="sp-rule"></div>
+  <div class="sp-sub">Five suspects. One truth per case.<br>You have five questions to spend however you choose.</div>
+  <button class="sp-btn" onclick="goTo('archive')">Enter the precinct →</button>
+</div>
+
+<!-- ═══════════════ ARCHIVE ═══════════════ -->
+<div class="screen" id="s-archive">
+  <div class="arc-head">
+    <div class="arc-badge-row">
+      <div class="det-badge">🕵️</div>
+      <div><div class="det-rank">Detective</div><div class="det-name">On Duty</div></div>
+    </div>
+    <div class="arc-stats">
+      <div class="arc-stat"><span class="arc-stat-val" id="stat-solved">0</span><span class="arc-stat-lbl">Cases Solved</span></div>
+      <div class="arc-stat"><span class="arc-stat-val" id="stat-total">0</span><span class="arc-stat-lbl">Opened</span></div>
+      <div class="arc-stat"><span class="arc-stat-val" id="stat-avg">—</span><span class="arc-stat-lbl">Avg. Questions</span></div>
+      <div class="arc-stat"><span class="arc-stat-val" id="stat-rate">—</span><span class="arc-stat-lbl">Solve Rate</span></div>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="new-case-box" onclick="createCase()">
+      <h2>Open a New Case</h2>
+      <p>A fresh crime. Fresh suspects. Nothing carried over.</p>
+      <button class="btn btn-primary" style="pointer-events:none">Begin investigation →</button>
+    </div>
+    <div class="sec-head" style="margin-top:36px;"><span class="sec-lbl">Case Archive</span><div class="sec-rule"></div></div>
+    <div class="hist-grid" id="hist-grid"></div>
+    <div class="arc-err" id="arc-err"></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════ BRIEFING ═══════════════ -->
+<div class="screen" id="s-briefing">
+  <div class="briefing-content">
+    <div class="br-case-id" id="br-case-id">CASE #—</div>
+    <div class="br-headline" id="br-headline">—</div>
+    <div class="br-story" id="br-story"></div>
+    <button class="btn btn-primary" onclick="startInvestigation()">Start Investigation →</button>
+  </div>
+</div>
+
+<!-- ═══════════════ GAME ═══════════════ -->
+
+<div class="screen" id="s-game">
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="sb-left">
+      <button class="sb-back" onclick="confirmLeave()">← Archive</button>
+      <span class="sb-case-id" id="sb-case-id">CASE #—</span>
+    </div>
+    <div class="sb-center" id="sb-pips"></div>
+    <div style="display:flex; align-items:center; gap: 16px;">
+      <button class="btn btn-ghost btn-sm" onclick="goTo('briefing')">Review Briefing</button>
+      <button class="btn btn-danger btn-sm" onclick="openOverlay('accuse')">Make Accusation</button>
+      <span class="sb-timer" id="sb-timer">00:00</span>
+    </div>
+  </div>
+
+  <!-- Workspace -->
+  <div class="workspace">
+
+    
+
+    <!-- Main: suspects + interrogation -->
+    <main class="ws-main">
+      <div class="ws-main-top">
+        <span class="wmt-title">Persons of Interest</span>
+        <span class="guidance-text" id="guidance-text">Select a suspect to begin questioning</span>
+      </div>
+      <div class="ws-content">
+        <!-- Suspect cards -->
+        <div class="suspects-area" id="suspects-area"></div>
+        <!-- Interrogation panel (slides up from bottom) -->
+        <div class="int-panel" id="int-panel">
+          <div class="int-panel-head">
+            <div class="iph-left">
+              <div class="iph-av" id="iph-av">?</div>
+              <div>
+                <div class="iph-name" id="iph-name">—</div>
+                <div class="iph-role" id="iph-role">—</div>
+              </div>
+            </div>
+            <button class="iph-close" onclick="closeInt()" title="Close panel">✕</button>
+          </div>
+          <div class="int-panel-body">
+            <div class="int-left">
+              <div>
+                <div class="il-personality-lbl">Known behaviour</div>
+                <div class="il-personality" id="il-personality"></div>
+              </div>
+              <div>
+                <div class="il-notes-lbl">Your notes</div>
+                <textarea class="il-notes" id="il-notes" placeholder="Write anything…" oninput="saveNote()"></textarea>
+              </div>
+            </div>
+            <div class="int-right">
+              <div class="int-topics-col">
+                <div class="itc-lbl">Ask about</div>
+                <div id="topics-list"></div>
+              </div>
+              <div class="int-transcript-col" id="transcript-col">
+                <div class="itc-empty">Pick a question on the left to begin.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  </div>
+
+<!-- ═══════════════ OVERLAYS ═══════════════ -->
+
+<!-- Accuse overlay -->
+<div class="overlay" id="ov-accuse">
+  <div class="ov-bar">
+    <span class="ov-title">⚖ Final Accusation</span>
+    <button class="ov-close" onclick="closeOverlay('accuse')">✕</button>
+  </div>
+  <div class="ov-body">
+    <div class="acc-pre" id="acc-pre">You have one accusation. Once made, it cannot be taken back. You're not looking for a confession — you're looking for the person whose story doesn't hold up under everything you've learned.</div>
+    <div class="acc-grid" id="acc-grid"></div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;">
+      <button class="btn btn-ghost btn-sm" onclick="closeOverlay('accuse');openOverlay('deduction')">← Review deductions first</button>
+      <button class="btn btn-danger" id="accuse-btn" onclick="showConfirm()" disabled>Select a suspect first</button>
+    </div>
+    <div style="color:var(--red-bright);font-family:'Courier Prime',monospace;font-size:11px;margin-top:10px;" id="accuse-err"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ REVEAL ═══════════════ -->
+<div class="screen" id="s-reveal">
+  <div class="rv-hero">
+    <div class="rv-eyebrow" id="rv-eyebrow"></div>
+    <div class="rv-stamp" id="rv-stamp"></div>
+    <div class="rv-murderer" id="rv-murderer"></div>
+    <div class="rv-mrole" id="rv-mrole"></div>
+    <div class="rv-confession" id="rv-confession"></div>
+    <div class="rv-stats" id="rv-stats"></div>
+  </div>
+  <div class="rv-section" style="padding-top:32px;">
+    <div class="sec-head"><span class="sec-lbl">Achievements earned</span><div class="sec-rule"></div></div>
+    <div class="achiev-row" id="rv-achievements"></div>
+    <div class="sec-head" style="margin-top:24px;"><span class="sec-lbl">What everyone was really doing</span><div class="sec-rule"></div></div>
+    <div class="bd-grid" id="rv-breakdown"></div>
+    <div class="divider"></div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding-bottom:48px;">
+      <button class="btn btn-primary" onclick="createCase()">Another case →</button>
+      <button class="btn btn-ghost" onclick="goTo('archive')">Back to archive</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── CONFIG ─── */
+const API = 'http://127.0.0.1:8000';
+const BUDGET = 5;
+
+/* ─── STATE ─── */
+const G = {
+  screen: 'splash',
+  activeOverlay: null,
+  case: null,
+  topics: [],
+  evidence: [],
+  activeEv: null,
+  activeSusp: null,
+  accused: null,
+  notes: {},
+  suspicion: {},
+  timerSec: 0,
+  timerID: null,
+  confScore: 0,
+  history: [],
+};
+
+/* ─── SUSPECT META ─── */
+const SMETA = {
+  chef:      { av:'V', personality:'Warm but flustered under pressure. Over-explains kitchen logistics when nervous. Talks with his hands.' },
+  librarian: { av:'E', personality:'Precise, slightly cold. Chooses words with care. Dislikes being interrupted mid-sentence.' },
+  caretaker: { av:'O', personality:'Gruff, plainspoken. Seems bored by questions but notices everything. Long silences before answering.' },
+  teacher:   { av:'P', personality:'Composed, articulate, slightly performative. Pauses a beat too long before saying anything personal.' },
+  mailman:   { av:'F', personality:'Chatty, eager to help. Fills silences with extra detail. Friendly in a way that occasionally goes too far.' },
+};
+
+/* ─── EVIDENCE ─── */
+const SCENE_D = {
+  'the wine cellar':     { scene:'The body was found between the third and fourth wine rack, face-down on the stone floor. Two bottles shattered nearby. A single candle had burned to its holder.', physical:'A brass wine key, heavily scuffed at one end, found three feet from the body. Faint traces on the grip.' },
+  'the east wing study': { scene:'The body was found slumped in the armchair. The nightcap glass sat on the side table, dregs still present. The lamp was on; the fire had burned low.', physical:'The nightcap glass — contents partially consumed. A bitter smell noted by first responders.' },
+  'the greenhouse':      { scene:'The body lay near the orchid section, partially concealed under a spilled tray of soil. The rear door was found unlatched, though it locks from inside.', physical:'A torn fragment of dark fabric caught on a rose thorn at chest height. Colour and weave inconsistent with the victim\'s clothing.' },
+  'the boathouse':       { scene:'The body was at the far end of the dock. A mooring line had been recently unknotted. A broken lantern, muddy impressions on the decking.', physical:'A boat key on a copper ring, found wedged between the planks. Does not belong to the victim.' },
+  'the study':           { scene:'The body was near the fireplace, one hand outstretched toward the mantel. A letter had been partially burned in the grate.', physical:'Fragment of burned letter: "…cannot allow this to continue. By Thursday I will have no choice but to…" The rest is ash.' },
+  'the north corridor':  { scene:'The body was at the base of the staircase. Scuff marks suggest a struggle at the top, not a fall from the bottom.', physical:'A pocket watch, cracked, stopped at 11:14 PM. Engraved: "For faithful service." Not the victim\'s.' },
+};
+const METHOD_D = {
+  'a blow to the head':                  { label:'Blunt Force Object', desc:'A single forceful blow from behind at close range. The object used was not recovered.' },
+  'poison in a nightcap':                { label:'Suspected Poisoning', desc:'Signs consistent with a fast-acting poison in liquid form. The nightcap glass is the primary suspect vehicle.' },
+  'strangulation':                       { label:'Manual Strangulation', desc:'From behind. Attacker was standing; height and leverage suggest moderate build. No ligature found.' },
+  'drowning, staged as an accident':     { label:'Staged Drowning', desc:'Cause of death is drowning, but bruising on the wrists is inconsistent with an accidental fall.' },
+  'a single gunshot':                    { label:'Gunshot, Close Range', desc:'A single shot at close range from behind. No weapon found. Neighbours heard nothing.' },
+  'a fall down the stairs, staged as an accident': { label:'Staged Fall', desc:'Head trauma consistent with a fall, but injuries don\'t match an accidental tumble.' },
+};
+function buildEvidence(c) {
+  const sd = SCENE_D[c.location] || { scene:`Body found at ${c.location}.`, physical:'Evidence being catalogued.' };
+  const md = METHOD_D[c.method]  || { label:'Unknown', desc:'Method unclear.' };
+  return [
+    { id:'scene',    icon:'🏚', tag:'Crime Scene',       label:c.location,        tagline:`Found approx. ${c.window.split(' - ')[0]}`, content:sd.scene,    note:`Scene sealed at ${c.window.split(' - ')[1]}.` },
+    { id:'weapon',   icon:'🔍', tag:md.label,            label:'Cause of death',  tagline:c.method,                                     content:md.desc,     note:'No weapon in custody at time of filing.' },
+    { id:'physical', icon:'📦', tag:'Physical Evidence', label:'Items collected', tagline:`At ${c.location}`,                            content:sd.physical, note:'Chain of custody established.' },
+    { id:'victim',   icon:'📋', tag:"Victim's Profile",  label:'Known to all five',tagline:c.victim,                                    content:`The victim, ${c.victim}, was last seen alive during the evening gathering. No sign of forced entry to ${c.location}. All five persons of interest knew the victim personally — some more recently than others.`, note:'Next of kin notified.' },
+  ];
+}
+
+/* ─── CONFESSIONS ─── */
+const CONFESSIONS = {
+  'disputed inheritance':    '"Forty years I gave to this house. He was going to hand it to people who\'d never set foot here. I reached the end of it."',
+  'discovered theft':        '"He found the ledger. There was no way out of that conversation that didn\'t end the way it ended."',
+  'longstanding grudge':     '"Some things don\'t get forgiven. That night I simply ran out of patience for trying."',
+  'blackmail':               '"He had everything on paper. I couldn\'t let him walk out of that room with it."',
+  'forged appraisal':        '"She had proof. Real proof. I had perhaps thirty seconds to make a decision."',
+  'old rivalry':             '"You carry something long enough and it stops feeling like a choice."',
+  'money owed':              '"I asked politely. Many times. That evening was simply the last time I was willing to ask."',
+  'secret affair':           '"She was going to tell everyone. I panicked. Then it was too late."',
+  'will about to be changed':'"I had waited too long already. I wasn\'t going to watch everything go to strangers."',
+  'gambling debt':           '"He was going to expose me. I had maybe twenty seconds to decide."',
+  'forged document':         '"He found the original. Once he found it, there was only one thing that could happen."',
+  'blackmail letter':        '"I burned the letter. But he\'d already read every word."',
+  'mid-theft':               '"He wasn\'t supposed to be there. Neither was I. We both made choices."',
+  'expose an affair':        '"My whole life balanced on one secret. He was going to knock it over."',
+  'years of resentment':     '"There is no dramatic reason. I had carried it too long. That night I set it down."',
+  'witnessed crime':         '"He recognised me. After all these years, he recognised me."',
+  'jealousy over a will':    '"I had been passed over. I had always been passed over."',
+  'business partnership':    '"He was going to take everything and leave me with nothing. Again."',
+};
+function getConfession(motive) {
+  const k = Object.keys(CONFESSIONS).find(k => motive.toLowerCase().includes(k));
+  return k ? CONFESSIONS[k] : '"I had my reasons. You would have made the same choice."';
+}
+const REAL_TRUTHS = {
+  chef:      'Was genuinely in the kitchen all evening. Left briefly for the pantry — not mentioned voluntarily. Nothing to hide beyond that.',
+  librarian: 'Was reshelving as stated. Evasive answers were about a personal matter entirely unrelated to the murder.',
+  caretaker: 'Passed through the relevant area once during the window. Described movements accurately but incompletely.',
+  teacher:   'Account checks out — was with the children. Did notice someone pass the corridor but didn\'t think to mention it.',
+  mailman:   'Was on the property longer than stated. The omitted detail is embarrassing, not incriminating.',
+};
+
+/* ─── UTILITY ─── */
+async function apiCall(path, opts={}) {
+  const r = await fetch(API+path, { headers:{'Content-Type':'application/json'}, ...opts });
+  if (!r.ok) { const b = await r.json().catch(()=>({})); throw new Error(b.detail||`Error ${r.status}`); }
+  return r.json();
+}
+function goTo(s) {
+  document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+  document.getElementById('s-'+s).classList.add('active');
+  window.scrollTo({top:0});
+  G.screen = s;
+  if (s==='archive') renderArchive();
+}
+function setLoading(on, t='One moment…') {
+  document.getElementById('loading-ov').classList.toggle('show',on);
+  document.getElementById('loading-t').textContent = t;
+}
+function toast(msg, dur=3200) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), dur);
+}
+function typewriter(el, text, speed=15) {
+  return new Promise(res=>{
+    el.innerHTML='';
+    const cur=document.createElement('span'); cur.className='typing-cursor'; el.appendChild(cur);
+    let i=0;
+    const id=setInterval(()=>{
+      if(i<text.length) el.insertBefore(document.createTextNode(text[i++]),cur);
+      else { clearInterval(id); cur.remove(); res(); }
+    },speed);
+  });
+}
+function confirmLeave() {
+  if (G.case && !G.case.solved && confirm('Leave the investigation? Your case will be lost.')) goTo('archive');
+  else if (!G.case) goTo('archive');
+}
+
+/* ─── TIMER ─── */
+function startTimer() {
+  G.timerSec=0; clearInterval(G.timerID);
+  G.timerID=setInterval(()=>{
+    G.timerSec++;
+    const m=String(Math.floor(G.timerSec/60)).padStart(2,'0');
+    const s=String(G.timerSec%60).padStart(2,'0');
+    document.getElementById('sb-timer').textContent=`${m}:${s}`;
+  },1000);
+}
+function stopTimer() { clearInterval(G.timerID); }
+
+/* ─── OVERLAYS ─── */
+function openOverlay(name) {
+  if (G.activeOverlay) { document.getElementById('ov-'+G.activeOverlay).classList.remove('open'); }
+  G.activeOverlay = name;
+  const ov = document.getElementById('ov-'+name);
+  ov.classList.add('open');
+  // Mark dock btn active
+  document.querySelectorAll('.dock-btn').forEach(b=>b.classList.remove('active-dock'));
+  const dBtn = document.getElementById('dock-'+name);
+  if (dBtn) dBtn.classList.add('active-dock');
+  // Render overlay contents
+  if (name==='evidence')  renderEvOverlay();
+  if (name==='board')     renderBoard();
+  if (name==='timeline')  renderTimeline();
+  if (name==='deduction') renderDeduction();
+  if (name==='accuse')    renderAccuseGrid();
+}
+function closeOverlay(name) {
+  document.getElementById('ov-'+name).classList.remove('open');
+  if (G.activeOverlay===name) G.activeOverlay=null;
+  document.querySelectorAll('.dock-btn').forEach(b=>b.classList.remove('active-dock'));
+}
+
+/* ─── HISTORY ─── */
+function loadHistory() { try { G.history=JSON.parse(localStorage.getItem('lsa_h')||'[]'); } catch{ G.history=[]; } }
+function saveHistory(e) { G.history.unshift(e); if(G.history.length>20) G.history=G.history.slice(0,20); localStorage.setItem('lsa_h',JSON.stringify(G.history)); }
+
+/* ─── ARCHIVE ─── */
+function renderArchive() {
+  loadHistory();
+  const solved=G.history.filter(h=>h.correct).length, total=G.history.length;
+  const avgQ=total?(G.history.reduce((a,h)=>a+h.qUsed,0)/total).toFixed(1):'—';
+  const rate=total?Math.round(solved/total*100)+'%':'—';
+  document.getElementById('stat-solved').textContent=solved;
+  document.getElementById('stat-total').textContent=total;
+  document.getElementById('stat-avg').textContent=avgQ;
+  document.getElementById('stat-rate').textContent=rate;
+  const grid=document.getElementById('hist-grid');
+  if(!G.history.length){ grid.innerHTML='<div class="hist-empty">No cases on file yet. Open your first case above.</div>'; return; }
+  grid.innerHTML=G.history.map(h=>`<div class="hist-card ${h.correct?'solved':'failed'}">
+    <div class="hc-stars">${'★'.repeat(h.stars||0)}${'☆'.repeat(3-(h.stars||0))}</div>
+    <div class="hc-num">CASE #${(h.caseId||'').slice(0,8).toUpperCase()}</div>
+    <div class="hc-victim">${h.victim||'Unknown'}</div>
+    <div class="hc-verdict ${h.correct?'solved':'failed'}">${h.correct?'✓ Case solved':'✗ Incorrect accusation'}</div>
+    <div class="hc-meta"><span>⏱ ${h.time||'—'}</span><span>❓ ${h.qUsed}/5</span></div>
+  </div>`).join('');
+}
+
+/* ─── CREATE CASE ─── */
+async function createCase() {
+  setLoading(true,'Opening the file…');
+  document.getElementById('arc-err').textContent='';
+  // Close any open overlays
+  if (G.activeOverlay) closeOverlay(G.activeOverlay);
+  try {
+    if(!G.topics.length){ const d=await apiCall('/topics'); G.topics=d.topics; }
+    G.case=await apiCall('/cases',{method:'POST'});
+    G.evidence=buildEvidence(G.case);
+    G.activeEv=null; G.activeSusp=null; G.accused=null;
+    G.notes={}; G.suspicion={}; G.confScore=0;
+    Object.keys(SMETA).forEach(k=>{ G.suspicion[k]=0; });
+    closeInt();
+    renderBriefing();
+    goTo('briefing');
+  } catch(e) {
+    document.getElementById('arc-err').textContent=e.message;
+  } finally { setLoading(false); }
+}
+
+
+function renderBriefing() {
+  const c = G.case;
+  const id8 = c.id.slice(0,8).toUpperCase();
+  document.getElementById('br-case-id').textContent = `CASE #${id8}`;
+  document.getElementById('br-headline').textContent = `${cap(c.victim)} — found at ${c.location}.`;
+  
+  let storyHtml = `<p>The victim, <strong style="color:var(--amber)">${c.victim}</strong>, was last seen alive during the evening gathering.</p>`;
+  
+  const md = METHOD_D[c.method];
+  if(md) storyHtml += `<p><strong>Cause of death:</strong> ${md.label}. ${md.desc}</p>`;
+  
+  const sd = SCENE_D[c.location];
+  if(sd) {
+    storyHtml += `<p><strong>Scene:</strong> ${sd.scene}</p>`;
+    storyHtml += `<p><strong>Physical Evidence:</strong> ${sd.physical}</p>`;
+  }
+  
+  storyHtml += `<p>All five persons of interest knew the victim personally. You have ${BUDGET} questions to ask them before you must make an accusation.</p>`;
+  
+  document.getElementById('br-story').innerHTML = storyHtml;
+}
+
+function startInvestigation() {
+  startTimer();
+  renderGameUI();
+  goTo('game');
+}
+
+/* ─── RENDER GAME UI ─── */
+function renderGameUI() {
+  const c=G.case;
+  const id8=c.id.slice(0,8).toUpperCase();
+  const elSbCaseId = document.getElementById('sb-case-id');
+  if(elSbCaseId) elSbCaseId.textContent=`CASE #${id8}`;
+  const elScStamp = document.getElementById('sc-stamp');
+  if(elScStamp) elScStamp.textContent=`Case #${id8}`;
+  const elScHeadline = document.getElementById('sc-headline');
+  if(elScHeadline) elScHeadline.textContent=`${cap(c.victim)} — found at ${c.location}.`;
+  const elScMeta = document.getElementById('sc-meta');
+  if(elScMeta) elScMeta.innerHTML=`
+    <div class="sc-row"><b>Location</b><span>${c.location}</span></div>
+    <div class="sc-row"><b>Window</b><span>${c.window}</span></div>
+    <div class="sc-row"><b>Suspects</b><span>${c.suspects.length} persons of interest</span></div>`;
+  renderPips();
+  renderSuspects();
+  
+  updateGuidance();
+}
+function renderPips() {
+  const used=BUDGET-(G.case?.questions_remaining||0);
+  const elSbPips = document.getElementById('sb-pips');
+  if(elSbPips) {
+    elSbPips.innerHTML=
+      Array.from({length:BUDGET},(_,i)=>`<div class="sb-pip${i<used?' spent':''}"></div>`).join('')+
+      `<span class="sb-q-count">&nbsp;<b>${G.case?.questions_remaining||0}</b> left</span>`;
+  }
+  const conf=Math.min(100,G.confScore);
+  const elConfFill = document.getElementById('conf-fill');
+  if(elConfFill) elConfFill.style.width=conf+'%';
+  const elConfDesc = document.getElementById('conf-desc');
+  if(elConfDesc) {
+    elConfDesc.textContent=
+      conf<20?'Nothing yet':conf<40?'Something feels off':conf<60?'A lead is forming':conf<80?'Strong suspicion':'Near certainty';
+  }
+}
+function cap(s){ return s?s.charAt(0).toUpperCase()+s.slice(1):s; }
+
+/* ─── SIDEBAR EVIDENCE ─── */
+function renderSidebarEvidence() {
+  const wrap=document.getElementById('sev-thumbs');
+  wrap.innerHTML=G.evidence.map(ev=>`
+    <div class="sev-thumb${G.activeEv===ev.id?' active-ev':''}" onclick="toggleSidebarEv('${ev.id}')">
+      <span class="sev-t-icon">${ev.icon}</span>
+      <span class="sev-t-label">${ev.tag}</span>
+    </div>`).join('');
+  const dw=document.getElementById('sev-detail-wrap');
+  if(G.activeEv){
+    const ev=G.evidence.find(e=>e.id===G.activeEv);
+    dw.innerHTML=`<div class="sev-detail">
+      <div class="sev-d-tag">${ev.tag}</div>
+      <div class="sev-d-body">${ev.content}</div>
+      <div class="sev-d-note">${ev.note}</div>
+    </div>`;
+  } else { dw.innerHTML=''; }
+}
+function toggleSidebarEv(id){ G.activeEv=G.activeEv===id?null:id;  }
+
+/* ─── EVIDENCE OVERLAY ─── */
+function renderEvOverlay() {
+  const thumbs=document.getElementById('ov-ev-thumbs');
+  thumbs.innerHTML=G.evidence.map(ev=>`
+    <div class="sev-thumb${G.activeEv===ev.id?' active-ev':''}" onclick="toggleOvEv('${ev.id}')" style="padding:16px 14px;">
+      <span class="sev-t-icon" style="font-size:24px;">${ev.icon}</span>
+      <div style="font-family:'Courier Prime',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--amber-dim);margin-bottom:4px;">${ev.tag}</div>
+      <div style="font-family:'Playfair Display',serif;font-size:14px;color:var(--paper);margin-bottom:3px;">${ev.label}</div>
+      <div style="font-family:'Courier Prime',monospace;font-size:10px;color:var(--ink-faint);">${ev.tagline}</div>
+    </div>`).join('');
+  const det=document.getElementById('ov-ev-detail');
+  if(G.activeEv){
+    const ev=G.evidence.find(e=>e.id===G.activeEv);
+    det.innerHTML=`<div style="background:var(--card2);border:1px solid var(--line2);border-radius:8px;padding:24px 28px;">
+      <div style="display:flex;gap:16px;align-items:flex-start;border-bottom:1px dashed var(--line2);padding-bottom:16px;margin-bottom:18px;">
+        <span style="font-size:36px;">${ev.icon}</span>
+        <div><div style="font-family:'Playfair Display',serif;font-size:19px;color:var(--paper);">${ev.label}</div>
+        <div style="font-family:'Courier Prime',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--amber-dim);">${ev.tag} — ${ev.tagline}</div></div>
+      </div>
+      <div style="font-family:'IM Fell English',serif;font-style:italic;font-size:15px;line-height:1.8;color:var(--ink);margin-bottom:16px;">${ev.content}</div>
+      <div style="font-family:'Courier Prime',monospace;font-size:11px;color:var(--ink-faint);padding-top:12px;border-top:1px solid var(--line);">Filed: ${ev.note}</div>
+    </div>`;
+  } else { det.innerHTML=''; }
+}
+function toggleOvEv(id){ G.activeEv=G.activeEv===id?null:id; renderEvOverlay();  }
+
+/* ─── SUSPECTS ─── */
+function renderSuspects() {
+  const area=document.getElementById('suspects-area');
+  if(!G.case){ area.innerHTML=''; return; }
+  area.innerHTML='';
+  G.case.suspects.forEach(s=>{
+    const meta=SMETA[s.key]||{av:'?'};
+    const rating=G.suspicion[s.key]||0;
+    const card=document.createElement('div');
+    card.className=['susp-card',s.can_ask||s.questions_asked>0?'':'exhausted',s.questions_asked>0?'questioned':'',G.activeSusp===s.key?'active':''].filter(Boolean).join(' ');
+    card.innerHTML=`
+      <div class="sc-dot"></div>
+      <div class="sc-av">${meta.av}</div>
+      <div class="sc-name">${s.name}</div>
+      <div class="sc-role">${s.occupation}</div>
+      <div class="sc-sus">${Array.from({length:5},(_,i)=>`<div class="sc-sus-pip${rating>i?' lit':''}${rating>i&&rating>=4?' hot':''}" onclick="event.stopPropagation();setSusp('${s.key}',${i+1})"></div>`).join('')}</div>`;
+    if(s.can_ask||s.questions_asked>0) card.addEventListener('click',()=>openInt(s.key));
+    area.appendChild(card);
+  });
+}
+function setSusp(key,val){ G.suspicion[key]=G.suspicion[key]===val?0:val; renderSuspects(); renderDeduction(); }
+
+/* ─── GUIDANCE TEXT ─── */
+function updateGuidance() {
+  const el=document.getElementById('guidance-text');
+  if(!G.case){ el.textContent=''; return; }
+  const qUsed=BUDGET-G.case.questions_remaining;
+  const questioned=G.case.suspects.filter(s=>s.questions_asked>0).length;
+  if(qUsed===0)       el.textContent='→ Select a suspect to begin questioning';
+  else if(qUsed<2)    el.textContent='→ Question more suspects to gather information';
+  else if(qUsed<BUDGET) el.textContent='→ Check the Board for patterns and conflicts';
+  else                el.textContent='→ Questions used up — review Deduction and Accuse';
+  
+  const dockAccuse = document.getElementById('dock-accuse');
+  if(qUsed>=BUDGET && dockAccuse) {
+    dockAccuse.classList.add('pulse');
+  }
+}
+/* ─── INTERROGATION ─── */
+function openInt(key) {
+  G.activeSusp=key;
+  const s=G.case.suspects.find(x=>x.key===key);
+  const meta=SMETA[key]||{av:'?'};
+  document.getElementById('iph-av').textContent=meta.av;
+  document.getElementById('iph-name').textContent=s.name;
+  document.getElementById('iph-role').textContent=s.occupation;
+  document.getElementById('il-personality').textContent=meta.personality;
+  document.getElementById('il-notes').value=G.notes[key]||'';
+  // Topics
+  const list=document.getElementById('topics-list');
+  list.innerHTML='';
+  G.topics.forEach(t=>{
+    const used=G.case.transcript.some(e=>e.suspect===key&&e.topic===t.key);
+    const btn=document.createElement('button');
+    btn.className='topic-btn'+(used?' used':'');
+    btn.textContent=t.label;
+    btn.disabled=used||!s.can_ask;
+    btn.addEventListener('click',()=>ask(key,t.key,t.label));
+    list.appendChild(btn);
+  });
+  // Transcript
+  const col=document.getElementById('transcript-col');
+  const existing=G.case.transcript.filter(e=>e.suspect===key);
+  if(!existing.length){ col.innerHTML='<div class="itc-empty">Pick a question on the left to begin.</div>'; }
+  else {
+    col.innerHTML='';
+    existing.forEach(e=>{
+      const tLabel=G.topics.find(t=>t.key===e.topic)?.label||e.topic;
+      addBubble(col,tLabel,e.reply,false);
+    });
+  }
+  // Open panel
+  document.getElementById('int-panel').classList.add('open');
+  renderSuspects();
+}
+function closeInt() {
+  document.getElementById('int-panel').classList.remove('open');
+  G.activeSusp=null;
+  renderSuspects();
+}
+function saveNote() { if(G.activeSusp) G.notes[G.activeSusp]=document.getElementById('il-notes').value; }
+
+/* ─── ASK ─── */
+async function ask(suspKey, topicKey, topicLabel) {
+  const col=document.getElementById('transcript-col');
+  const thinking=document.createElement('div');
+  thinking.className='thinking';
+  thinking.innerHTML=`<span>Weighing the question</span><div class="t-dots"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div>`;
+  // Clear empty placeholder
+  col.querySelector('.itc-empty')?.remove();
+  col.appendChild(thinking);
+  document.querySelectorAll('.topic-btn').forEach(b=>b.disabled=true);
+  try {
+    await apiCall(`/cases/${G.case.id}/suspects/${suspKey}/ask`,{method:'POST',body:JSON.stringify({topic:topicKey})});
+    G.case=await apiCall(`/cases/${G.case.id}`);
+    thinking.remove();
+    const evasive=['actually','don\'t recall','couldn\'t say','not sure','elsewhere','prefer not','vague','rather not'];
+    const isSus=evasive.some(w=>G.case.transcript.at(-1)?.reply.toLowerCase().includes(w));
+    G.confScore+=isSus?22:6;
+    renderGameUI();
+    openInt(suspKey);
+    const entry=G.case.transcript.find(e=>e.suspect===suspKey&&e.topic===topicKey);
+    if(entry){ const freshCol=document.getElementById('transcript-col'); await addBubble(freshCol,topicLabel,entry.reply,true); }
+    if(G.case.questions_remaining===0) { toast('No questions left — time to accuse.'); document.getElementById('dock-accuse').classList.add('pulse'); }
+    else if(G.case.questions_remaining===1) toast('One question remaining.');
+    updateGuidance();
+  } catch(e) {
+    thinking.remove();
+    toast(e.message);
+    if(G.activeSusp) openInt(G.activeSusp);
+  }
+}
+function addBubble(col, question, answer, animate) {
+  const isSus=['actually','don\'t recall','vague','elsewhere','rather not'].some(w=>answer.toLowerCase().includes(w));
+  const div=document.createElement('div');
+  div.className='bubble'+(isSus?' sus':'');
+  const id='ba-'+Date.now()+Math.random();
+  div.innerHTML=`<div class="bubble-q">${question}</div><div class="bubble-a" id="${id}"></div>${isSus?'<span class="bubble-flag bf-sus">⚡ Evasive phrasing</span>':''}`;
+  col.appendChild(div);
+  col.scrollTop=col.scrollHeight;
+  const el=document.getElementById(id);
+  if(animate) return typewriter(el,`"${answer}"`);
+  el.textContent=`"${answer}"`; return Promise.resolve();
+}
+
+/* ─── BOARD ─── */
+function renderBoard() {
+  const pins=document.getElementById('board-pins');
+  const cs=document.getElementById('conflict-strip');
+  cs.innerHTML='';
+  const tr=G.case?.transcript||[];
+  if(!tr.length){ pins.innerHTML='<div class="board-empty">Nothing pinned yet. Question suspects to fill the board.</div>'; return; }
+  const bySusp={};
+  tr.forEach(e=>{ if(!bySusp[e.suspect]) bySusp[e.suspect]={name:e.suspect_name,entries:[]}; bySusp[e.suspect].entries.push(e); });
+  const conflicts=detectConflicts(tr);
+  const grid=document.createElement('div'); grid.className='pins-grid';
+  G.case.suspects.forEach(s=>{
+    const data=bySusp[s.key]; if(!data) return;
+    const hasC=conflicts.some(c=>c.suspects.includes(s.key));
+    const note=G.notes[s.key]||'';
+    const card=document.createElement('div'); card.className='pin-card';
+    card.innerHTML=`<div class="pin-name">${s.name} — ${s.occupation}</div>
+      ${data.entries.map(e=>`<div class="pin-entry"><span class="pin-topic">${e.topic}</span>${e.reply.length>90?e.reply.slice(0,90)+'…':e.reply}</div>`).join('')}
+      ${note?`<div class="pin-note">${note}</div>`:''}
+      ${hasC?'<div class="pin-flag pf-conflict">⚡ Story contradicted</div>':data.entries.length>1?'<div class="pin-flag pf-watch">◆ Worth a second look</div>':'<div class="pin-flag pf-clean">✓ No contradiction yet</div>'}`;
+    grid.appendChild(card);
+  });
+  pins.innerHTML=''; pins.appendChild(grid);
+  conflicts.forEach(c=>{
+    const al=document.createElement('div'); al.className='conflict-alert';
+    al.innerHTML=`<span>⚡</span><span>${c.message}</span>`;
+    cs.appendChild(al);
+  });
+}
+function detectConflicts(tr) {
+  const locs=['cellar','kitchen','library','garden','study','corridor','drawing room','east wing','greenhouse','boathouse','upstairs','downstairs','hallway','staircase'];
+  const conflicts=[]; const alibis=tr.filter(e=>e.topic==='alibi'); const sightings=tr.filter(e=>e.topic==='saw');
+  alibis.forEach(a=>{
+    const aLoc=locs.find(l=>a.reply.toLowerCase().includes(l)); if(!aLoc) return;
+    sightings.forEach(sw=>{
+      if(sw.suspect===a.suspect) return;
+      if(sw.reply.toLowerCase().includes(aLoc)){
+        const an=G.case.suspects.find(s=>s.key===a.suspect)?.name, bn=G.case.suspects.find(s=>s.key===sw.suspect)?.name;
+        if(an&&bn&&!conflicts.some(c=>c.suspects.includes(a.suspect)&&c.suspects.includes(sw.suspect)))
+          conflicts.push({suspects:[a.suspect,sw.suspect], message:`${an}'s alibi and ${bn}'s account of that evening don't quite align — one of them has placed someone somewhere they shouldn't be.`});
+      }
+    });
+  });
+  return conflicts;
+}
+
+/* ─── TIMELINE ─── */
+function renderTimeline() {
+  const c=G.case; if(!c) return;
+  const HOURS=['7:00','7:30','8:00','8:30','9:00','9:30','10:00','10:30','11:00','11:30'];
+  const toMin=t=>{ const[h,m]=t.split(':').map(Number); return h*60+(m||0); };
+  const TMIN=toMin('7:00'),TMAX=toMin('11:30'),TR=TMAX-TMIN;
+  const pct=m=>Math.max(0,Math.min(100,(m-TMIN)/TR*100));
+  document.getElementById('tl-ruler').innerHTML=HOURS.map(h=>`<div class="ruler-tick">${h}</div>`).join('');
+  const[ws,we]=c.window.split(' - ').map(t=>{ const n=t.trim().replace(' PM','').replace(' AM',''); const[hh,mm]=n.split(':').map(Number); return (hh<7?hh+12:hh)*60+(mm||0); });
+  document.getElementById('tl-mbar').innerHTML=`<div class="murder-zone" style="left:${pct(ws)}%;width:${pct(we)-pct(ws)}%"><span class="mz-label">Murder window</span></div>`;
+  const rows=document.getElementById('tl-rows'); rows.innerHTML='';
+  const LOC_KEYS={ kitchen:['kitchen','cook','chef','stoves'], cellar:['cellar','wine','bottles'], library:['library','book','reshelv'], garden:['garden','grounds','outside','path'], study:['study','fireplace','fire','desk'], corridor:['corridor','hallway','staircase'], boathouse:['boathouse','dock','boat','water'], greenhouse:['greenhouse','orchid','plants'] };
+  c.suspects.forEach(s=>{
+    const alibi=c.transcript.find(e=>e.suspect===s.key&&e.topic==='alibi');
+    const row=document.createElement('div'); row.className='tl-row';
+    let claimed='';
+    if(alibi){
+      const rlo=alibi.reply.toLowerCase();
+      const locKey=Object.keys(LOC_KEYS).find(k=>LOC_KEYS[k].some(w=>rlo.includes(w)));
+      const sl=pct(ws-25),el2=pct(we+25);
+      claimed=`<div class="tl-shade" style="left:${pct(ws)}%;width:${pct(we)-pct(ws)}%"></div><div class="tl-claimed" style="left:${sl}%;width:${el2-sl}%"><span class="tl-claimed-lbl">${locKey?`In the ${locKey}`:'Location claimed'}</span></div>`;
+    }
+    row.innerHTML=`<div class="tl-slabel">${s.name}</div><div class="tl-track">${claimed||'<span class="tl-nodata">Not questioned on alibi</span>'}</div>`;
+    rows.appendChild(row);
+  });
+}
+
+/* ─── DEDUCTION ─── */
+function renderDeduction() {
+  const c=G.case; if(!c) return;
+  const rows=document.getElementById('ded-rows'); rows.innerHTML='';
+  const TK=['alibi','relationship','saw','rumor'];
+  c.suspects.forEach(s=>{
+    const row=document.createElement('div'); row.className='ded-row';
+    const nc=document.createElement('div'); nc.className='ded-cell';
+    nc.innerHTML=`<div class="ded-sname">${s.name}</div><div class="ded-srole">${s.occupation}</div>`;
+    row.appendChild(nc);
+    TK.forEach(tk=>{
+      const entry=c.transcript.find(e=>e.suspect===s.key&&e.topic===tk);
+      const ev=['actually','vague','don\'t recall','elsewhere','rather not','not entirely'].some(w=>entry?.reply.toLowerCase().includes(w));
+      const cell=document.createElement('div');
+      cell.className='ded-cell'+(entry?' has-data':'')+(ev?' evasive':entry&&entry.reply.length>80?' suspicious':'');
+      cell.innerHTML=entry?`<div class="ded-snippet">${entry.reply.slice(0,78)}${entry.reply.length>78?'…':''}</div>`:'<span class="ded-empty">—</span>';
+      row.appendChild(cell);
+    });
+    const rating=G.suspicion[s.key]||0;
+    const sc=document.createElement('div'); sc.className='ded-cell';
+    const sw=document.createElement('div'); sw.className='sus-wrap';
+    const ss=document.createElement('div'); ss.className='sus-stars';
+    for(let i=1;i<=5;i++){ const st=document.createElement('div'); st.className='sus-star'+(rating>=i?' lit':'')+(rating>=i&&rating>=4?' hot':''); st.addEventListener('click',()=>setSusp(s.key,i)); ss.appendChild(st); }
+    const sl=document.createElement('div'); sl.className='sus-lbl'; sl.textContent=rating===0?'—':rating<=2?'Low':rating<=3?'Medium':rating<=4?'High':'Primary';
+    sw.appendChild(ss); sw.appendChild(sl); sc.appendChild(sw); row.appendChild(sc);
+    rows.appendChild(row);
+  });
+}
+
+/* ─── ACCUSE ─── */
+function renderAccuseGrid() {
+  const c=G.case; if(!c) return;
+  const qLeft=c.questions_remaining;
+  document.getElementById('acc-pre').textContent=qLeft>0
+    ?`You still have ${qLeft} question${qLeft>1?'s':''} remaining. Are you certain enough to proceed without using them?`
+    :'You have no questions left. This is your final accusation — it cannot be retracted.';
+  const grid=document.getElementById('acc-grid'); grid.innerHTML='';
+  c.suspects.forEach(s=>{
+    const meta=SMETA[s.key]||{av:'?'};
+    const rating=(G.suspicion[s.key]||0);
+    const card=document.createElement('div'); card.className='acc-card'+(G.accused===s.key?' chosen':'');
+    card.innerHTML=`<div class="acc-av">${meta.av}</div><div class="acc-name">${s.name}</div><div class="acc-role">${s.occupation}</div><div class="acc-bar"><div class="acc-bar-fill" style="width:${rating*20}%"></div></div>`;
+    card.addEventListener('click',()=>{ G.accused=s.key; renderAccuseGrid(); const btn=document.getElementById('accuse-btn'); btn.disabled=false; btn.textContent=`Accuse ${s.name} →`; });
+    grid.appendChild(card);
+  });
+}
+function showConfirm() {
+  if(!G.accused) return;
+  const s=G.case.suspects.find(x=>x.key===G.accused);
+  document.getElementById('co-name').textContent=s.name;
+  document.getElementById('co-role').textContent=s.occupation;
+  const qLeft=G.case.questions_remaining;
+  document.getElementById('co-text').textContent=qLeft>0
+    ?`You still have ${qLeft} question${qLeft>1?'s':''} unused. Once you accuse, this case is closed.`
+    :'No questions remain. Your accusation is final.';
+  document.getElementById('co-confirm').onclick=submitAccusation;
+  document.getElementById('conf-overlay').classList.add('show');
+}
+function closeConfirm() { document.getElementById('conf-overlay').classList.remove('show'); }
+
+async function submitAccusation() {
+  closeConfirm(); closeOverlay('accuse');
+  setLoading(true,'Making the accusation…');
+  try {
+    const result=await apiCall(`/cases/${G.case.id}/accuse`,{method:'POST',body:JSON.stringify({suspect:G.accused,motive_keyword:'unknown'})});
+    stopTimer();
+    showReveal(result);
+  } catch(e) { document.getElementById('accuse-err').textContent=e.message; }
+  finally { setLoading(false); }
+}
+
+/* ─── REVEAL ─── */
+function showReveal(result) {
+  const correct=result.correct_suspect;
+  const rev=result.reveal;
+  const qUsed=BUDGET-G.case.questions_remaining;
+  const timeSec=G.timerSec;
+  const timeStr=timeSec<60?`${timeSec}s`:`${Math.floor(timeSec/60)}m ${timeSec%60}s`;
+  const stars=correct?qUsed<=2?3:qUsed<=3?2:1:0;
+  const achievements=[];
+  if(correct)              achievements.push({icon:'🎯',name:'Correct',desc:'Identified the right suspect'});
+  if(correct&&qUsed<=2)    achievements.push({icon:'⚡',name:'Eagle Eye',desc:'Solved with ≤2 questions'});
+  if(correct&&timeSec<120) achievements.push({icon:'🕐',name:'Speed',desc:'Solved in under 2 minutes'});
+  if(G.case.transcript.length>=G.case.suspects.length) achievements.push({icon:'📋',name:'Thorough',desc:'Questioned every suspect'});
+  if(!correct&&G.suspicion[G.accused]>=4) achievements.push({icon:'🎭',name:'Misdirected',desc:'Fell for the red herring'});
+  if(correct&&qUsed===BUDGET) achievements.push({icon:'💎',name:'Last Card',desc:'Used every question first'});
+  if(!achievements.length) achievements.push({icon:'🔍',name:'On the Case',desc:'Kept investigating'});
+  saveHistory({caseId:G.case.id,victim:G.case.victim,correct,stars,qUsed,time:timeStr,murdererName:rev.murderer_name,motive:rev.motive});
+  document.getElementById('rv-eyebrow').textContent=correct?'Case Closed':'Incorrect Accusation';
+  document.getElementById('rv-eyebrow').className='rv-eyebrow'+(correct?' correct':' wrong');
+  document.getElementById('rv-stamp').textContent=correct?'CASE CLOSED':'WRONG SUSPECT';
+  document.getElementById('rv-stamp').className='rv-stamp'+(correct?'':' wrong');
+  document.getElementById('rv-murderer').textContent=rev.murderer_name;
+  document.getElementById('rv-mrole').textContent=G.case.suspects.find(s=>s.key===rev.murderer)?.occupation||'';
+  document.getElementById('rv-confession').textContent=getConfession(rev.motive);
+  document.getElementById('rv-stats').innerHTML=`
+    <div class="rv-stat"><span class="rv-sv">${qUsed}</span><span class="rv-sl">Questions used</span></div>
+    <div class="rv-stat"><span class="rv-sv">${timeStr}</span><span class="rv-sl">Solve time</span></div>
+    <div class="rv-stat"><span class="rv-sv">${'★'.repeat(stars)+'☆'.repeat(3-stars)}</span><span class="rv-sl">Rating</span></div>
+    <div class="rv-stat"><span class="rv-sv">${correct?'✓':'✗'}</span><span class="rv-sl">${correct?'Correct':'Incorrect'}</span></div>`;
+  document.getElementById('rv-achievements').innerHTML=achievements.map((a,i)=>`<div class="achiev-badge" style="animation-delay:${i*.08}s"><span class="ab-icon">${a.icon}</span><span class="ab-name">${a.name}</span><span class="ab-desc">${a.desc}</span></div>`).join('');
+  document.getElementById('rv-breakdown').innerHTML=G.case.suspects.map(s=>{
+    const isM=s.key===rev.murderer; const meta=SMETA[s.key]||{av:'?'};
+    return `<div class="bd-card${isM?' murderer':''}">
+      <div class="bd-head"><div class="bd-av">${meta.av}</div><div><div class="bd-name">${s.name}${isM?' <span style="color:var(--red-bright);font-size:12px;">— Murderer</span>':''}</div><div class="bd-role">${s.occupation}</div></div></div>
+      <div class="bd-truth-l">What really happened</div>
+      <div class="bd-truth">${isM?`Motive: ${rev.motive}. Method: ${rev.method}.`:REAL_TRUTHS[s.key]||'No additional information.'}</div>
+    </div>`;
+  }).join('');
+  goTo('reveal');
+}
+
+/* ─── BOOT ─── */
+loadHistory();
+</script>
+</body>
+</html>

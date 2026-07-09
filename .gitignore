@@ -1,1 +1,8 @@
-.env
+venv/
+__pycache__/
+node_modules/
+test.js
+test_syntax.js
+update_index.py
+.DS_Store
+*.pyc
